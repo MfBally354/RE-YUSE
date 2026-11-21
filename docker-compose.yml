@@ -1,0 +1,37 @@
+services:
+  web:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8080}:80"
+    env_file: .env
+    environment:
+      DB_HOST: db
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - uploads:/var/www/html/public/uploads
+
+  db:
+    image: mariadb:11
+    restart: unless-stopped
+    # Setelan hemat RAM untuk VPS 1 GB
+    command: ["--innodb-buffer-pool-size=64M", "--max-connections=40", "--performance-schema=OFF", "--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+    environment:
+      MARIADB_DATABASE: ${DB_NAME:-preloved}
+      MARIADB_USER: ${DB_USER:-preloved}
+      MARIADB_PASSWORD: ${DB_PASS:-ganti_password_ini}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASS:-ganti_root_password}
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    volumes:
+      - dbdata:/var/lib/mysql
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+
+volumes:
+  dbdata:
+  uploads:

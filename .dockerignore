@@ -1,0 +1,3 @@
+app/public/uploads/*
+!app/public/uploads/.gitkeep
+.git
